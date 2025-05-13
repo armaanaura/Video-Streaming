@@ -16,23 +16,23 @@ func generateRandomId(idLength int) string {
 	return string(id)
 }
 
-func CreateRoom () *models.Room {
-	var room = &models.Room{
-		ID : generateRandomId(5),
-		Participants : []string{},
-	}
-	return room
-}
+// func CreateRoom () *models.Room {
+// 	var room = &models.Room{
+// 		ID : generateRandomId(5),
+// 		Participants : []string{},
+// 	}
+// 	return room
+// }
 
-func JoinRoom(room *models.Room, userPhoneNumber string) error {
-	for _, participant := range room.Participants{
-		if(participant==userPhoneNumber){
-			return fmt.Errorf("user %s already exists", userPhoneNumber)
-		}
-	}
-	room.Participants = append(room.Participants, userPhoneNumber)
-	return nil
-}
+// func JoinRoom(room *models.Room, userPhoneNumber string) error {
+// 	for _, participant := range room.Participants{
+// 		if(participant==userPhoneNumber){
+// 			return fmt.Errorf("user %s already exists", userPhoneNumber)
+// 		}
+// 	}
+// 	room.Participants = append(room.Participants, userPhoneNumber)
+// 	return nil
+// }
 
 func LeaveRoom(room *models.Room, userPhoneNumber string) error {
 	index := -1

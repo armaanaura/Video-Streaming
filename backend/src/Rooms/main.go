@@ -1,14 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"myModule/Rooms/handlers"
 	"myModule/Rooms/models"
 
 	"github.com/gofiber/fiber/v2"
-
-	// "github.com/google/uuid"
-	"fmt"
-
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
@@ -17,82 +15,63 @@ func main() {
 	app.Use(cors.New())
 
 	var lobby models.Lobby = models.Lobby{
-		Rooms : []*models.Room{},
+		Rooms: []*models.Room{},
 	}
+	var lobbyPointer = &lobby
 
+	// API Post request for creating a room in lobby
 	app.Post("/create-room", func(conn *fiber.Ctx) error {
-		var roomPointer = handlers.CreateRoom()
-		lobby.Rooms = append(lobby.Rooms, roomPointer)
-		return nil
+		log.Println("Create Room request initialized")
+		type request struct {
+			UserId string `json:"userId"`
+		}
+		var body request
+		if err := conn.BodyParser(&body); err != nil {
+			log.Printf("Invalid request body: %v", err)
+			return conn.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"status":  "error",
+				"message": "Invalid request body",
+				"error":   err.Error(),
+			})
+		}
+		roomPointer := handlers.CreateRoom(body.UserId, lobbyPointer)
+		log.Printf("Room created successfully with ID: %s", roomPointer.ID)
+		return conn.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"status":  "success",
+			"message": fmt.Sprintf("Room created successfully with ID: %s", roomPointer.ID),
+			"roomId":  roomPointer.ID,
+		})
 	})
-	
-	app.Post("/join-room", func(conn * fiber.Ctx) error {
+	// API request to join room
+	app.Post("/join-room", func(conn *fiber.Ctx) error {
 		type request struct {
 			UserId string
 			RoomId string
 		}
-		var body request 
-		if err := conn.BodyParser(&body) ; err!= nil{
-			return conn.Status(400).SendString("Invalid request : on join room route")
-		}
-		var requestedRoomId string= body.RoomId
-
-		var foundId bool = false
-		for _, createdRoomIdPointer := range lobby.Rooms {
-			if(*&createdRoomIdPointer.ID == requestedRoomId){
-				foundId= true
-				createdRoomIdPointer.Participants= append(createdRoomIdPointer.Participants, body.UserId)
-				break
-			}
-		}
-		if foundId == false {
-			fmt.Errorf("room id %s doesn't exist", body.RoomId)
-			return conn.Status(400).SendString("Invalid request : No room exists with this id")
-		}
-		return nil
-	})
-
-
-	// -------------------------------------------------------
-
-
-
-	// JOIN endpoint
-	app.Post("/join", func(c *fiber.Ctx) error {
-		type request struct {
-			UserId string `json:"userId"`
-			RoomId string `json:"roomId"`
-		}
 		var body request
-		if err := c.BodyParser(&body); err != nil {
-			return c.Status(400).SendString("Invalid request")
+		if err := conn.BodyParser(&body); err != nil {
+			log.Printf("Invalid request body: %v", err)
+			return conn.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"status":  "error",
+				"message": "Invalid request body",
+				"error":   err.Error(),
+			})
 		}
-
-		if body.RoomId != room.ID {
-			return c.Status(404).SendString("Room not found")
+		err := handlers.JoinRoom(body.UserId, body.RoomId, lobbyPointer)
+		if err != nil {
+			return conn.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"status":  "error",
+				"message": "User Id don't exist",
+				"error":   err,
+			})
 		}
-
-		room.Participants = append(room.Participants, body.UserId)
-		fmt.Print("new user joined")
-		return c.JSON(room)
+		return conn.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"status":  "success",
+			"message": "User joined successfully",
+		})
 	})
-
-	// GET endpoint
-	app.Get("/room/:id", func(c *fiber.Ctx) error {
-		if c.Params("id") != room.ID {
-			return c.Status(404).SendString("Room not found")
-		}
-		fmt.Printf("new user joined")
-		return c.JSON(room)
-	})
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("✅ Fiber server is running")
-	})
-
-	// Add this log
-	println("✅ Server running on http://localhost:3000")
 	err := app.Listen(":8000")
 	if err != nil {
-		println("❌ Failed to start server:", err.Error())
+		println("Failed to start server:", err.Error())
 	}
 }
