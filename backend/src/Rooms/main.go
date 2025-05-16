@@ -6,8 +6,11 @@ import (
 	"myModule/Rooms/handlers"
 	"myModule/Rooms/models"
 
+	// "myModule/Rooms/utils"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/websocket/v2"
 )
 
 func main() {
@@ -18,6 +21,8 @@ func main() {
 		Rooms: []*models.Room{},
 	}
 	var lobbyPointer = &lobby
+
+	var wsConnections = make(map[string]*websocket.Conn)
 
 	// API Post request for creating a room in lobby
 	app.Post("/create-room", func(conn *fiber.Ctx) error {
@@ -70,6 +75,19 @@ func main() {
 			"message": "User joined successfully",
 		})
 	})
+
+	// Api request to make websocket connection
+	app.Get("/ws", websocket.New(func(wsPointer *websocket.Conn){
+		defer wsPointer.Close()
+		// append socket connection for each user
+		var userId = wsPointer.Query("userId")
+		wsConnections[userId] = wsPointer
+
+		// handle socket connection
+		handlers.SocketHandler(wsPointer)
+	}))
+
+
 	err := app.Listen(":8000")
 	if err != nil {
 		println("Failed to start server:", err.Error())

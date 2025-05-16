@@ -1,33 +1,35 @@
 import './Styles/sessionWindow.css';
-import {useState} from 'react'
+import {useState, useEffect, useRef} from 'react'
 import {requestCreateRoom, requestJoinRoom} from '../Utils/api'
-// import useWebSocket from 'react-use-websocket'; 
-
-// const peer = new RTCPeerConnection({
-//     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-// });
-
-// const socket = new WebSocket("")
-// socket.onmessage = async (event) =>{
-//     const data = JSON.parse(event.data);
-
-//     if(data.type==="offer"){
-//         await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
-//         const answer = await peer.createAnswer();
-//         await peer.setLocalDescription(answer)
-//         socket.send(JSON.stringify({"type":"answer", "sdp": answer}))
-//     } else if(data.type === "answer"){
-//         await peer.setRemoteDescription(new RTCSessionDescription(data.sdp));
-//     }else if (data.type ==="canditate"){
-//         await peer.addIceCandidate(new RTCIceCandidate(data.candidate));
-//     }
-// };
+import VideoRoom from '../Components/VideoRoom'
 
 
 
 export function JoiningLobby(){
     const [roomId, setRoomId] = useState('');
     const [userId, setUserId] = useState('');
+
+    const ws = useRef<WebSocket | null> (null);
+
+    useEffect(()=>{
+        ws.current= new WebSocket(`ws:localhost:3000/ws?userId=${userId}`)
+
+        ws.current.onopen = () => {
+            console.log("WebSocket connected");
+        };
+
+        ws.current.onmessage = (event) => {
+            // setMessages((prev) => [...prev, `Server: ${event.data}`]);
+        };
+
+        ws.current.onerror = (err) => {
+            console.error("WebSocket error:", err);
+        };
+
+        ws.current.onclose = () => {
+            console.log("WebSocket disconnected");
+        };
+        }, [])
 
     const createRoom = async () => {
         try{
@@ -71,7 +73,9 @@ export function JoiningLobby(){
                 </div>
                 <button className="joinButton" onClick={joinRoom}>Join</button>
                 <button className="createButton" onClick={createRoom}>Create</button>
+
             </div>
+            <VideoRoom roomId={roomId} userId={userId} />
         </div>
     )
 }

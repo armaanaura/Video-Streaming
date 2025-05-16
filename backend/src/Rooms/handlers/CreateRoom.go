@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"log"
 	"myModule/Rooms/models"
+	"myModule/Rooms/utils"
 )
 
 func CreateRoom(userId string, lobby *models.Lobby) *models.Room {
 	fmt.Printf("Room creation initialized by the user : %s", userId)
 	var newRoom = models.Room{
-		ID:           generateRandomId(10),
+		ID:           utils.GenerateRandomId(10),
 		Participants: []string{userId},
 	}
 	var roomPointer = &newRoom
