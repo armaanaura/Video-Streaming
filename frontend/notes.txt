@@ -1,8 +1,0 @@
-To study
-ICE candidates
-STUN servers
-TURN servers
-types of ICE candidates
-
-
-todo: how to create a room if lobby is not there?
